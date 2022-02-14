@@ -2,18 +2,19 @@ package main
 
 import (
 	"fsfc_store/logger"
+	"fsfc_store/router"
 	"net/http"
 	"time"
 )
 
 func main() {
 	//配置logger
-	logger.InitLogger(config.GetConfig().Log.Path, config.GetConfig().Log.Level)
+	//logger.InitLogger(config.GetConfig().Log.Path, config.GetConfig().Log.Level)
 
-	logger.Logger.Info("config", logger.Any("config", config.GetConfig()))
+	//logger.Logger.Info("config", logger.Any("config", config.GetConfig()))
 
 	//Logger
-	logger.Logger.Info("start server", logger.String("start", "start web sever..."))
+	//logger.Logger.Info("start server", logger.String("start", "start web sever..."))
 
 	//设置路由
 	newRouter := router.NewRouter()
