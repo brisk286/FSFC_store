@@ -5,6 +5,7 @@ import (
 	"fsfc_store/rsync"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
+
 	"net/http"
 )
 
@@ -19,6 +20,7 @@ func GetChangedFilesAndPostDataList(c *gin.Context) {
 		hashesFiles = append(hashesFiles, rsync.FileBlockHashes{Filename: filename, BlockHashes: hashes})
 	}
 
-	c.JSON(http.StatusOK, response.SuccessMsg(hashesFiles))
+	//hashesFiles := []string{"123", "123", "345"}
 
+	c.JSON(http.StatusOK, response.SuccessMsg(hashesFiles))
 }

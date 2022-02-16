@@ -22,7 +22,7 @@ func NewRouter() *gin.Engine {
 
 	group := server.Group("")
 	{
-		group.POST("/getFiles", api.GetChangedFilesAndPostDataList)
+		group.POST("/changedFile", api.GetChangedFilesAndPostDataList)
 
 	}
 	return server
