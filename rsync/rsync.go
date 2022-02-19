@@ -17,6 +17,17 @@ type BlockHash struct {
 	weakHash uint32
 }
 
+// RSyncOp An rsync operation (typically to be sent across the network). It can be either a block of raw data or a block index.
+//rsync数据体
+type RSyncOp struct {
+	//操作类型
+	opCode int
+	//如果是DATA 那么保存数据
+	data []byte
+	//如果是BLOCK 保存块下标
+	blockIndex int
+}
+
 //常量
 const (
 	// BLOCK 整块数据
@@ -90,4 +101,30 @@ func CalculateBlockHashes(content []byte) []BlockHash {
 		}
 	}
 	return blockHashes
+}
+
+// ApplyOps Applies operations from the channel to the original content.
+// Returns the modified content.
+//根据通道接收到的信息，将数据组装发送
+//参数：文件内容，数据操作体 通道， 本地文件大小
+//返回:组装后的数据
+func ApplyOps(content []byte, rSyncOps []RSyncOp, fileSize int) []byte {
+	result := make([]byte, fileSize)
+
+	var offset int
+
+	for _, op := range rSyncOps {
+		switch op.opCode {
+		case BLOCK:
+			//copy：目标文件，源文件
+			copy(result[offset:offset+BlockSize], content[op.blockIndex*BlockSize:op.blockIndex*BlockSize+BlockSize])
+			offset += BlockSize
+		//DATA是不定长的
+		case DATA:
+			copy(result[offset:], op.data)
+			offset += len(op.data)
+		}
+	}
+
+	return result
 }

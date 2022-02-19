@@ -23,7 +23,7 @@ func NewRouter() *gin.Engine {
 	group := server.Group("")
 	{
 		group.POST("/changedFile", api.GetChangedFilesAndPostDataList)
-
+		group.POST("/rebuildFile", api.GetRsyncOpsToRebuild)
 	}
 	return server
 }
