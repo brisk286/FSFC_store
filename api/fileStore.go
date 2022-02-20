@@ -1,12 +1,13 @@
 package api
 
 import (
+	"fmt"
+	"fsfc_store/fs"
 	"fsfc_store/response"
 	"fsfc_store/rsync"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"io/ioutil"
-
 	"net/http"
 )
 
@@ -15,13 +16,16 @@ func GetChangedFilesAndPostDataList(c *gin.Context) {
 
 	changedFiles := c.PostFormArray("changedFiles")
 
+	fmt.Println(changedFiles)
+
 	for _, filename := range changedFiles {
+		_ = fs.MkdirAllFile(filename)
 		originalFile, _ := ioutil.ReadFile(filename)
+
 		hashes := rsync.CalculateBlockHashes(originalFile)
 		hashesFiles = append(hashesFiles, rsync.FileBlockHashes{Filename: filename, BlockHashes: hashes})
 	}
 
-	// todo；用json真的能传吗
 	c.JSON(http.StatusOK, response.SuccessMsg(hashesFiles))
 }
 
