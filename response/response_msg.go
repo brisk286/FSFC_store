@@ -1,5 +1,7 @@
 package response
 
+import "fsfc_store/rsync"
+
 type ResponseMsg struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
@@ -19,6 +21,15 @@ func SuccessCodeMsg() *ResponseMsg {
 	msg := &ResponseMsg{
 		Code: 0,
 		Msg:  "SUCCESS",
+	}
+	return msg
+}
+
+func SuccessHashesMsg(data []rsync.FileBlockHashes) *ResponseMsg {
+	msg := &ResponseMsg{
+		Code: 0,
+		Msg:  "SUCCESS",
+		Data: data,
 	}
 	return msg
 }

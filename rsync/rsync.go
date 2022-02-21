@@ -3,29 +3,29 @@ package rsync
 import "crypto/md5"
 
 type FileBlockHashes struct {
-	Filename    string
-	BlockHashes []BlockHash
+	Filename    string      `json:"filename"`
+	BlockHashes []BlockHash `json:"blockHashes"`
 }
 
 // BlockHash hash块结构
 type BlockHash struct {
 	//哈希块下标
-	index int
+	Index int `json:"index"`
 	//强哈希值
-	strongHash []byte
+	StrongHash []byte `json:"strongHash"`
 	//弱哈希值
-	weakHash uint32
+	WeakHash uint32 `json:"weakHash"`
 }
 
 // RSyncOp An rsync operation (typically to be sent across the network). It can be either a block of raw data or a block index.
 //rsync数据体
 type RSyncOp struct {
 	//操作类型
-	opCode int
+	OpCode int `json:"opCode"`
 	//如果是DATA 那么保存数据
-	data []byte
+	Data []byte `json:"data"`
 	//如果是BLOCK 保存块下标
-	blockIndex int
+	BlockIndex int `json:"blockIndex"`
 }
 
 //常量
@@ -95,9 +95,9 @@ func CalculateBlockHashes(content []byte) []BlockHash {
 		weak, _, _ := weakHash(block)
 		//保存到块哈希数组中
 		blockHashes[i] = BlockHash{
-			index:      i,
-			strongHash: strongHash(block),
-			weakHash:   weak,
+			Index:      i,
+			StrongHash: strongHash(block),
+			WeakHash:   weak,
 		}
 	}
 	return blockHashes
@@ -114,15 +114,15 @@ func ApplyOps(content []byte, rSyncOps []RSyncOp, fileSize int) []byte {
 	var offset int
 
 	for _, op := range rSyncOps {
-		switch op.opCode {
+		switch op.OpCode {
 		case BLOCK:
 			//copy：目标文件，源文件
-			copy(result[offset:offset+BlockSize], content[op.blockIndex*BlockSize:op.blockIndex*BlockSize+BlockSize])
+			copy(result[offset:offset+BlockSize], content[op.BlockIndex*BlockSize:op.BlockIndex*BlockSize+BlockSize])
 			offset += BlockSize
 		//DATA是不定长的
 		case DATA:
-			copy(result[offset:], op.data)
-			offset += len(op.data)
+			copy(result[offset:], op.Data)
+			offset += len(op.Data)
 		}
 	}
 
