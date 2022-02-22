@@ -10,7 +10,7 @@ func FileIsExist(filename string) error {
 	_, err := os.Stat(filename)
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("文件不存在, 创建新文件")
+			fmt.Println("文件不存在, 将创建新文件：", filename)
 			return err
 		}
 	}
