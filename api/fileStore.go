@@ -25,9 +25,14 @@ func GetChangedFilesAndPostDataList(c *gin.Context) {
 
 	var hashesFiles []rsync.FileBlockHashes
 	for _, filename := range changedFiles {
-		_ = fs.MkdirAllFile(filename)
-		originalFile, _ := ioutil.ReadFile(filename)
-
+		err := fs.MkdirAllFile(filename)
+		if err != nil {
+			panic("文件创建发生错误")
+		}
+		originalFile, err := ioutil.ReadFile(filename)
+		if err != nil {
+			panic("未找到远程端文件")
+		}
 		fmt.Println("读取远程文件成功", filename, originalFile)
 
 		hashes := rsync.CalculateBlockHashes(originalFile)
@@ -61,9 +66,12 @@ func GetRsyncOpsToRebuild(c *gin.Context) {
 	rsyncOps := rsyncOpsResp.RsyncOps
 	modifiedLength := rsyncOpsResp.ModifiedLength
 
-	original, _ := ioutil.ReadFile(filename)
-	fmt.Println("找到远程端文件2")
-
+	original, err := ioutil.ReadFile(filename)
+	if err != nil {
+		fmt.Println("未找到远程端文件")
+	} else {
+		fmt.Println("找到远程端文件2")
+	}
 	result := rsync.ApplyOps(original, rsyncOps, modifiedLength)
 
 	//写入文件

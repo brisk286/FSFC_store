@@ -41,6 +41,7 @@ func MkdirAllFile(filename string) error {
 		if err != nil {
 			fmt.Println("创建文件失败")
 		}
+		return err
 	}
 
 	return err
