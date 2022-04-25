@@ -1,7 +1,7 @@
 package router
 
 import (
-	"fsfc_store/api"
+	"fsfc_store/api/v1"
 	"fsfc_store/logger"
 	"fsfc_store/response"
 	"net/http"
@@ -20,10 +20,12 @@ func NewRouter() *gin.Engine {
 
 	//socket := RunSocekt
 
-	group := server.Group("")
+	group := server.Group("v1")
 	{
-		group.POST("/changedFile", api.GetChangedFilesAndPostDataList)
-		group.POST("/rebuildFile", api.GetRsyncOpsToRebuild)
+		group.POST("/changedFile", v1.GetChangedFilesAndPostDataList)
+		group.POST("/rebuildFile", v1.GetRsyncOpsToRebuild)
+		group.POST("/multiDownload", v1.MultiDownload)
+		group.POST("/getFilesInfo", v1.GetFilesInfo)
 	}
 	return server
 }

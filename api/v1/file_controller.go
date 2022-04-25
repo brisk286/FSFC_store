@@ -1,14 +1,16 @@
-package api
+package v1
 
 import (
 	"fmt"
 	"fsfc_store/fs"
+	"fsfc_store/request"
 	"fsfc_store/response"
 	"fsfc_store/rsync"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 func GetChangedFilesAndPostDataList(c *gin.Context) {
@@ -78,4 +80,67 @@ func GetRsyncOpsToRebuild(c *gin.Context) {
 	fmt.Println("同步文件成功")
 
 	c.JSON(http.StatusOK, response.SuccessCodeMsg())
+}
+
+// RemotePath todo change  存储端应该默认自己所安装的目录，remotePath则设置在同级目录下
+const RemotePath = "/var/test"
+
+func MultiDownload(c *gin.Context) {
+	var downloadFilenames []string
+	err := c.ShouldBindBodyWith(&downloadFilenames, binding.JSON)
+	if err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{"error": err.Error()})
+		return
+	}
+
+	for _, filename := range downloadFilenames {
+		file, err := os.Open(RemotePath + "/" + filename)
+		if err != nil {
+			/*c.JSON(http.StatusOK, gin.H{
+			    "success": false,
+			    "message": "失败",
+			    "error":   "资源不存在",
+			})*/
+			c.Redirect(http.StatusFound, "/404")
+			return
+		}
+		//结束后关闭文件
+		defer file.Close()
+
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Disposition", "attachment; filename="+filename)
+		c.Header("Content-Transfer-Encoding", "binary")
+		c.File(RemotePath + "/" + filename)
+		return
+	}
+}
+
+func GetFilesInfo(c *gin.Context) {
+	filesInfoReq := new(request.FilesInfoReq)
+	err := c.ShouldBindBodyWith(&filesInfoReq, binding.JSON)
+	if err != nil {
+		c.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			gin.H{"error": err.Error()})
+		return
+	}
+
+	var filesInfoResp response.FilesInfoResp
+
+	files, _ := ioutil.ReadDir(filesInfoReq.DirPath)
+	for _, file := range files {
+		if file.IsDir() {
+			filesInfoResp.Dirs = append(filesInfoResp.Dirs, file.Name())
+		} else {
+			filesInfoResp.FilesInfo = append(filesInfoResp.FilesInfo, response.RsyncFileInfo{
+				Name:      file.Name(),
+				Size:      file.Size(),
+				RsyncTime: file.ModTime(),
+			})
+		}
+	}
+
+	c.JSON(http.StatusOK, response.SuccessMsg(filesInfoResp))
 }

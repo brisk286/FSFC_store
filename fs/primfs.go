@@ -19,17 +19,20 @@ func FileIsExist(filename string) error {
 }
 
 func GetLastFile(path string) string {
-	seqList := strings.Split(path, "\\")
+	seqList := strings.Split(path, "/")
 	lastDir := seqList[len(seqList)-1]
+	fmt.Println("lastDir:" + lastDir)
 
 	return lastDir
 }
 
 func MkdirAllFile(filename string) error {
+	fmt.Println("filename:" + filename)
 	file := GetLastFile(filename)
 
 	dir := filename[:len(filename)-len(file)]
 
+	fmt.Println("dir:" + dir)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		fmt.Println("创建目录失败")

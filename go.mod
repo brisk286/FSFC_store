@@ -3,6 +3,7 @@ module fsfc_store
 go 1.17
 
 require (
+	github.com/deniswernert/go-fstab v0.0.0-20141204152952-eb4090f26517
 	github.com/gin-gonic/gin v1.7.7
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	go.uber.org/zap v1.21.0
