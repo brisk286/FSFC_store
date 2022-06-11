@@ -98,11 +98,11 @@ func MultiDownload(c *gin.Context) {
 	for _, filename := range downloadFilenames {
 		file, err := os.Open(RemotePath + "/" + filename)
 		if err != nil {
-			/*c.JSON(http.StatusOK, gin.H{
-			    "success": false,
-			    "message": "失败",
-			    "error":   "资源不存在",
-			})*/
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "失败",
+				"error":   "资源不存在",
+			})
 			c.Redirect(http.StatusFound, "/404")
 			return
 		}
