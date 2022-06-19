@@ -7,7 +7,7 @@ package header
 import (
 	"encoding/binary"
 	"errors"
-	"fsfc/rpc/compressor"
+	"fsfc_store/rpc/compressor"
 	"sync"
 )
 

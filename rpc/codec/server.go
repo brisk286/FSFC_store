@@ -6,9 +6,9 @@ package codec
 
 import (
 	"bufio"
-	"fsfc/rpc/compressor"
-	"fsfc/rpc/header"
-	"fsfc/rpc/serializer"
+	"fsfc_store/rpc/compressor"
+	"fsfc_store/rpc/header"
+	"fsfc_store/rpc/serializer"
 	"hash/crc32"
 	"io"
 	"net/rpc"

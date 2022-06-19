@@ -48,39 +48,39 @@ func GetChangedFilesAndPostDataList(c *gin.Context) {
 	c.JSON(http.StatusOK, response.SuccessMsg(hashesFiles))
 }
 
-func GetRsyncOpsToRebuild(c *gin.Context) {
-	fmt.Println("接收到RsyncOps")
-
-	var rsyncOpsResp response.RsyncOpsResp
-	err := c.ShouldBindBodyWith(&rsyncOpsResp, binding.JSON)
-	if err != nil {
-		c.AbortWithStatusJSON(
-			http.StatusInternalServerError,
-			gin.H{"error": err.Error()})
-		return
-	}
-
-	filename := rsyncOpsResp.Filename
-	rsyncOps := rsyncOpsResp.RsyncOps
-	modifiedLength := rsyncOpsResp.ModifiedLength
-
-	original, err := ioutil.ReadFile(filename)
-	if err != nil {
-		fmt.Println("未找到远程端文件")
-	} else {
-		fmt.Println("找到远程端文件2")
-	}
-
-	fmt.Println("文件同步中:", filename)
-	result := rsync.ApplyOps(original, rsyncOps, modifiedLength)
-	err = ioutil.WriteFile(filename, result, 0644)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("同步文件成功")
-
-	c.JSON(http.StatusOK, response.SuccessCodeMsg())
-}
+//func GetRsyncOpsToRebuild(c *gin.Context) {
+//	fmt.Println("接收到RsyncOps")
+//
+//	var rsyncOpsResp response.RsyncOpsResp
+//	err := c.ShouldBindBodyWith(&rsyncOpsResp, binding.JSON)
+//	if err != nil {
+//		c.AbortWithStatusJSON(
+//			http.StatusInternalServerError,
+//			gin.H{"error": err.Error()})
+//		return
+//	}
+//
+//	filename := rsyncOpsResp.Filename
+//	rsyncOps := rsyncOpsResp.RsyncOps
+//	modifiedLength := rsyncOpsResp.ModifiedLength
+//
+//	original, err := ioutil.ReadFile(filename)
+//	if err != nil {
+//		fmt.Println("未找到远程端文件")
+//	} else {
+//		fmt.Println("找到远程端文件2")
+//	}
+//
+//	fmt.Println("文件同步中:", filename)
+//	result := rsync.ApplyOps(original, rsyncOps, int32(modifiedLength))
+//	err = ioutil.WriteFile(filename, result, 0644)
+//	if err != nil {
+//		panic(err)
+//	}
+//	fmt.Println("同步文件成功")
+//
+//	c.JSON(http.StatusOK, response.SuccessCodeMsg())
+//}
 
 // RemotePath todo change  存储端应该默认自己所安装的目录，remotePath则设置在同级目录下
 const RemotePath = "/var/test"
@@ -99,9 +99,9 @@ func MultiDownload(c *gin.Context) {
 		file, err := os.Open(RemotePath + "/" + filename)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
-				"success": false,
-				"message": "失败",
-				"error":   "资源不存在",
+				"success":  false,
+				"protocol": "失败",
+				"error":    "资源不存在",
 			})
 			c.Redirect(http.StatusFound, "/404")
 			return

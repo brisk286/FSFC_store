@@ -108,7 +108,7 @@ func CalculateBlockHashes(content []byte) []BlockHash {
 //根据通道接收到的信息，将数据组装发送
 //参数：文件内容，数据操作体 通道， 本地文件大小
 //返回:组装后的数据
-func ApplyOps(content []byte, rSyncOps []RSyncOp, fileSize int) []byte {
+func ApplyOps(content []byte, rSyncOps []*RSyncOp, fileSize int32) []byte {
 	result := make([]byte, fileSize)
 
 	var offset int

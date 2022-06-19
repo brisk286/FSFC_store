@@ -8,7 +8,7 @@ import (
 	"errors"
 	"testing"
 
-	pb "fsfc/rpc/test.data/message"
+	pb "fsfc/rpc/data_rpc/protocol"
 	"github.com/stretchr/testify/assert"
 )
 
