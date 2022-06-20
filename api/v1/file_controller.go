@@ -1,93 +1,25 @@
 package v1
 
 import (
-	"fmt"
-	"fsfc_store/fs"
+	"archive/zip"
 	"fsfc_store/request"
 	"fsfc_store/response"
-	"fsfc_store/rsync"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
-func GetChangedFilesAndPostDataList(c *gin.Context) {
-	var changedFiles []string
-	err := c.ShouldBindBodyWith(&changedFiles, binding.JSON)
-	if err != nil {
-		c.AbortWithStatusJSON(
-			http.StatusInternalServerError,
-			gin.H{"error": err.Error()})
-		return
-	}
-
-	fmt.Println("接收到修改文件")
-
-	var hashesFiles []rsync.FileBlockHashes
-	for _, filename := range changedFiles {
-		err := fs.MkdirAllFile(filename)
-		if err != nil {
-			fmt.Println(filename)
-			panic("文件创建发生错误")
-		}
-
-		originalFile, err := ioutil.ReadFile(filename)
-		if err != nil {
-			panic("未找到远程端文件")
-		}
-		fmt.Println("读取远程文件成功", filename)
-
-		fmt.Println("计算BlockHashes")
-		hashes := rsync.CalculateBlockHashes(originalFile)
-
-		hashesFiles = append(hashesFiles, rsync.FileBlockHashes{Filename: filename, BlockHashes: hashes})
-	}
-
-	c.JSON(http.StatusOK, response.SuccessMsg(hashesFiles))
-}
-
-//func GetRsyncOpsToRebuild(c *gin.Context) {
-//	fmt.Println("接收到RsyncOps")
-//
-//	var rsyncOpsResp response.RsyncOpsResp
-//	err := c.ShouldBindBodyWith(&rsyncOpsResp, binding.JSON)
-//	if err != nil {
-//		c.AbortWithStatusJSON(
-//			http.StatusInternalServerError,
-//			gin.H{"error": err.Error()})
-//		return
-//	}
-//
-//	filename := rsyncOpsResp.Filename
-//	rsyncOps := rsyncOpsResp.RsyncOps
-//	modifiedLength := rsyncOpsResp.ModifiedLength
-//
-//	original, err := ioutil.ReadFile(filename)
-//	if err != nil {
-//		fmt.Println("未找到远程端文件")
-//	} else {
-//		fmt.Println("找到远程端文件2")
-//	}
-//
-//	fmt.Println("文件同步中:", filename)
-//	result := rsync.ApplyOps(original, rsyncOps, int32(modifiedLength))
-//	err = ioutil.WriteFile(filename, result, 0644)
-//	if err != nil {
-//		panic(err)
-//	}
-//	fmt.Println("同步文件成功")
-//
-//	c.JSON(http.StatusOK, response.SuccessCodeMsg())
-//}
-
 // RemotePath todo change  存储端应该默认自己所安装的目录，remotePath则设置在同级目录下
-const RemotePath = "/var/test"
+const RemotePath = "C:\\Users\\14595\\Desktop\\"
 
 func MultiDownload(c *gin.Context) {
-	var downloadFilenames []string
-	err := c.ShouldBindBodyWith(&downloadFilenames, binding.JSON)
+	downloadFilePaths := new(request.DownloadFilePath)
+	err := c.ShouldBindBodyWith(&downloadFilePaths, binding.JSON)
 	if err != nil {
 		c.AbortWithStatusJSON(
 			http.StatusInternalServerError,
@@ -95,8 +27,14 @@ func MultiDownload(c *gin.Context) {
 		return
 	}
 
-	for _, filename := range downloadFilenames {
-		file, err := os.Open(RemotePath + "/" + filename)
+	err = os.MkdirAll(".\\RsyncFiles", 0777)
+	if err != nil {
+		return
+	}
+
+	for _, filename := range downloadFilePaths.FilePaths {
+		//file, err := os.Open(RemotePath + "/" + filename)
+		file, err := os.Open("C:\\Users\\14595\\Desktop\\储存\\重要资料\\" + filename)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
 				"success":  false,
@@ -109,12 +47,26 @@ func MultiDownload(c *gin.Context) {
 		//结束后关闭文件
 		defer file.Close()
 
-		c.Header("Content-Type", "application/octet-stream")
-		c.Header("Content-Disposition", "attachment; filename="+filename)
-		c.Header("Content-Transfer-Encoding", "binary")
-		c.File(RemotePath + "/" + filename)
-		return
+		src, _ := os.Create(".\\RsyncFiles\\" + filename)
+		_, err = io.Copy(src, file)
+		if err != nil {
+			return
+		}
 	}
+	defer os.RemoveAll(".\\RsyncFiles")
+
+	Zip(".\\RsyncFiles", ".\\RsyncFiles.zip")
+	defer os.RemoveAll(".\\RsyncFiles.zip")
+
+	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Disposition", "attachment; filename="+"RsyncFiles.zip")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
+	c.Header("response-type", "blob") // 以流的形式下载必须设置这一项，否则前端下载下来的文件会出现格式不正确或已损坏的问题
+	//c.File(RemotePath + "/" + filename)
+	//fmt.Println(RemotePath + filename)
+	c.File("RsyncFiles.zip")
 }
 
 func GetFilesInfo(c *gin.Context) {
@@ -138,9 +90,55 @@ func GetFilesInfo(c *gin.Context) {
 				Name:      file.Name(),
 				Size:      file.Size(),
 				RsyncTime: file.ModTime(),
+				Path:      filesInfoReq.DirPath + "\\" + file.Name(),
 			})
 		}
 	}
 
 	c.JSON(http.StatusOK, response.SuccessMsg(filesInfoResp))
+}
+
+// 打包成zip文件
+func Zip(src_dir string, zip_file_name string) {
+
+	// 预防：旧文件无法覆盖
+	os.RemoveAll(zip_file_name)
+
+	// 创建：zip文件
+	zipfile, _ := os.Create(zip_file_name)
+	defer zipfile.Close()
+
+	// 打开：zip文件
+	archive := zip.NewWriter(zipfile)
+	defer archive.Close()
+
+	// 遍历路径信息
+	filepath.Walk(src_dir, func(path string, info os.FileInfo, _ error) error {
+
+		// 如果是源路径，提前进行下一个遍历
+		if path == src_dir {
+			return nil
+		}
+
+		// 获取：文件头信息
+		header, _ := zip.FileInfoHeader(info)
+		header.Name = strings.TrimPrefix(path, src_dir+`/`)
+
+		// 判断：文件是不是文件夹
+		if info.IsDir() {
+			header.Name += `/`
+		} else {
+			// 设置：zip的文件压缩算法
+			header.Method = zip.Deflate
+		}
+
+		// 创建：压缩包头部信息
+		writer, _ := archive.CreateHeader(header)
+		if !info.IsDir() {
+			file, _ := os.Open(path)
+			defer file.Close()
+			io.Copy(writer, file)
+		}
+		return nil
+	})
 }

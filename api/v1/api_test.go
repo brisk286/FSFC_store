@@ -3,7 +3,9 @@ package v1
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
+	"time"
 )
 
 func Test_Disk(t *testing.T) {
@@ -34,4 +36,10 @@ func Test_ArrFiles(t *testing.T) {
 			fmt.Println(fi.Name())
 		}
 	}
+}
+
+func Test_de(t *testing.T) {
+	dir := fmt.Sprintf(".\\%s", string(time.Now().UTC().String()))
+	fmt.Printf(dir)
+	os.MkdirAll(dir, 0777)
 }
