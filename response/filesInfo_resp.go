@@ -1,15 +1,25 @@
 package response
 
-import "time"
-
-type RsyncFileInfo struct {
-	Name      string    `json:"name"`
-	Size      int64     `json:"size"`
-	RsyncTime time.Time `json:"rsyncTime"`
-	Path      string    `json:"path"`
+type FilesInfoResp struct {
+	Dirs  []RsyncDirsInfo `json:"dirs"`
+	Files []RsyncFileInfo `json:"files"`
 }
 
-type FilesInfoResp struct {
-	Dirs      []string        `json:"dirs"`
-	FilesInfo []RsyncFileInfo `json:"filesInfo"`
+type RsyncDirsInfo struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Icon string `json:"icon"`
+}
+
+type RsyncFileInfo struct {
+	Id        string  `json:"id"`
+	Name      string  `json:"name"`
+	Size      float64 `json:"size"`
+	RsyncTime string  `json:"rsyncTime"`
+	Path      string  `json:"path"`
+}
+
+type AllSaveSpaceResp struct {
+	Dirs []string `json:"dirs"`
 }

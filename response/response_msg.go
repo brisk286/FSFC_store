@@ -42,10 +42,10 @@ func FailMsg(msg string) *ResponseMsg {
 	return msgObj
 }
 
-func FailCodeMsg(code int, msg string) *ResponseMsg {
+func FailCodeMsg() *ResponseMsg {
 	msgObj := &ResponseMsg{
-		Code: code,
-		Msg:  msg,
+		Code: -1,
+		Msg:  "FAIL",
 	}
 	return msgObj
 }

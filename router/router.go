@@ -22,10 +22,12 @@ func NewRouter() *gin.Engine {
 
 	group := server.Group("v1")
 	{
-		//group.POST("/changedFile", v1.GetChangedFilesAndPostDataList)
-		//group.POST("/rebuildFile", v1.GetRsyncOpsToRebuild)
 		group.POST("/multiDownload", v1.MultiDownload)
 		group.POST("/getFilesInfo", v1.GetFilesInfo)
+		//group.POST("/getBack", v1.GetBack)
+		group.GET("/getAllSaveSpace", v1.GetAllSaveSpace)
+		group.POST("/addSaveSpace", v1.AddSaveSpace)
+		group.POST("/deleteSaveSpace", v1.DeleteSaveSpace)
 	}
 	return server
 }
