@@ -18,7 +18,7 @@ type BlockHash struct {
 }
 
 // RSyncOp An rsync operation (typically to be sent across the network). It can be either a block of raw data or a block index.
-//rsync数据体
+// rsync数据体
 type RSyncOp struct {
 	//操作类型
 	OpCode int `json:"opCode"`
@@ -28,7 +28,7 @@ type RSyncOp struct {
 	BlockIndex int `json:"blockIndex"`
 }
 
-//常量
+// 常量
 const (
 	// BLOCK 整块数据
 	BLOCK = iota
@@ -38,14 +38,14 @@ const (
 
 const (
 	// BlockSize 默认块大小
-	//BlockSize = 1024 * 644
-	BlockSize = 2
+	BlockSize = 1024 * 644
+	//BlockSize = 2
 	// M 65536 弱哈希算法取模
 	M = 1 << 16
 )
 
 // Returns the number of blocks for a given slice of content.
-//计算文件需要块的数量
+// 计算文件需要块的数量
 func getBlocksNumber(content []byte) int {
 	blockNumber := len(content) / BlockSize
 	if len(content)%BlockSize != 0 {
@@ -63,7 +63,7 @@ func min(a, b int) int {
 }
 
 // Returns a weak hash for a given block of data.
-//弱hash
+// 弱hash
 func weakHash(v []byte) (uint32, uint32, uint32) {
 	var a, b uint32
 	for i := range v {
@@ -81,9 +81,9 @@ func strongHash(v []byte) []byte {
 }
 
 // CalculateBlockHashes Returns weak and strong hashes for a given slice.
-//计算每个块的哈希值
-//参数：全部数据内容
-//返回：每个块组成的列表
+// 计算每个块的哈希值
+// 参数：全部数据内容
+// 返回：每个块组成的列表
 func CalculateBlockHashes(content []byte) []BlockHash {
 	blockHashes := make([]BlockHash, getBlocksNumber(content))
 	for i := range blockHashes {
@@ -105,9 +105,9 @@ func CalculateBlockHashes(content []byte) []BlockHash {
 
 // ApplyOps Applies operations from the channel to the original content.
 // Returns the modified content.
-//根据通道接收到的信息，将数据组装发送
-//参数：文件内容，数据操作体 通道， 本地文件大小
-//返回:组装后的数据
+// 根据通道接收到的信息，将数据组装发送
+// 参数：文件内容，数据操作体 通道， 本地文件大小
+// 返回:组装后的数据
 func ApplyOps(content []byte, rSyncOps []*RSyncOp, fileSize int32) []byte {
 	result := make([]byte, fileSize)
 

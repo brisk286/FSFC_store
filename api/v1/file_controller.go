@@ -3,6 +3,7 @@ package v1
 import (
 	"archive/zip"
 	"bufio"
+	"fmt"
 	"fsfc_store/fs"
 	"fsfc_store/redis"
 	"fsfc_store/request"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -28,12 +30,31 @@ func MultiDownload(c *gin.Context) {
 		return
 	}
 
+	var filePaths []string
+	for _, filePath := range downloadFilePaths.FilePaths {
+		// 单独下载文件传的是linux的绝对地址，不用转换
+		if strings.Index(filePath, "/") == -1 {
+			filePaths = append(filePaths, fs.AbsToRelaStore(filePath))
+		} else {
+			filePaths = append(filePaths, filePath)
+		}
+	}
+
+	//_, err = os.Stat("./RsyncFiles")
+	//if err != nil {
+	//	os.RemoveAll("./RsyncFiles")
+	//}
+	//_, err = os.Stat("./RsyncFiles.zip")
+	//if err != nil {
+	//	os.RemoveAll("./RsyncFiles.zip")
+	//}
+
 	err = os.MkdirAll("./RsyncFiles", 0777)
 	if err != nil {
 		return
 	}
 
-	for _, fpath := range downloadFilePaths.FilePaths {
+	for _, fpath := range filePaths {
 		fInfo, err := os.Stat(fpath)
 		if err != nil {
 			c.JSON(http.StatusOK, gin.H{
@@ -45,6 +66,7 @@ func MultiDownload(c *gin.Context) {
 			return
 		}
 
+		// 如果是文件夹
 		if fInfo.IsDir() {
 			lastFile := fs.GetLastFile(fpath)
 			err := Copy(fpath, "./RsyncFiles/"+lastFile)
@@ -54,11 +76,11 @@ func MultiDownload(c *gin.Context) {
 					"protocol": "失败",
 					"error":    "文件夹创建失败",
 				})
+				return
 			}
 		} else {
+			// 如果是文件
 			file, _ := os.Open(fpath)
-
-			//结束后关闭文件
 			defer file.Close()
 
 			lastFile := fs.GetLastFile(fpath)
@@ -94,6 +116,12 @@ func GetFilesInfo(c *gin.Context) {
 		return
 	}
 
+	// 满足前端需求
+	// 如果传的是Windows地址，需转化为linux地址
+	if strings.Index(filesInfoReq.DirPath, "/") == -1 {
+		filesInfoReq.DirPath = fs.AbsToRelaStore(filesInfoReq.DirPath)
+	}
+
 	var filesInfoResp response.FilesInfoResp
 
 	files, _ := ioutil.ReadDir(filesInfoReq.DirPath)
@@ -111,7 +139,7 @@ func GetFilesInfo(c *gin.Context) {
 			filesInfoResp.Files = append(filesInfoResp.Files, response.RsyncFileInfo{
 				Id:        uid.String(),
 				Name:      file.Name(),
-				Size:      float64(file.Size()) / (1024),
+				Size:      Decimal(float64(file.Size()) / (1024)),
 				RsyncTime: file.ModTime().Format("2006-01-02 15:04:05"),
 				Path:      filesInfoReq.DirPath + "/" + file.Name(),
 			})
@@ -157,14 +185,20 @@ func GetFilesInfo(c *gin.Context) {
 //	c.JSON(http.StatusOK, response.SuccessMsg(filesInfoResp))
 //}
 
+func GetLastSyncTime(c *gin.Context) {
+	var lastSyncTimeResp response.LastSyncTimeResp
+	lastSyncTimeResp.LastSyncTime = fs.PrimFs.LastSyncTime.Format("2006-01-02 15:04:05")
+	c.JSON(http.StatusOK, response.SuccessMsg(lastSyncTimeResp))
+}
+
 func GetAllSaveSpace(c *gin.Context) {
 	var allSaveSpaceResp response.AllSaveSpaceResp
-	allSaveSpace, err := redis.Rdb.LRange("AllSaveSpace", 0, -1).Result()
+	allSaveSpace, err := redis.Client.SMembers("AllSaveSpace").Result()
 	if err != nil {
 		c.JSON(http.StatusOK, response.FailCodeMsg())
+		return
 	}
 	allSaveSpaceResp.Dirs = allSaveSpace
-
 	c.JSON(http.StatusOK, response.SuccessMsg(allSaveSpaceResp))
 }
 
@@ -178,9 +212,11 @@ func AddSaveSpace(c *gin.Context) {
 		return
 	}
 
-	err = redis.Rdb.RPush("AllSaveSpace", addSaveSpaceReq.DirPath).Err()
+	err = redis.Client.SAdd("AllSaveSpace", addSaveSpaceReq.DirPath).Err()
+
 	if err != nil {
 		c.JSON(http.StatusOK, response.FailCodeMsg())
+		return
 	}
 	c.JSON(http.StatusOK, response.SuccessCodeMsg())
 }
@@ -195,14 +231,17 @@ func DeleteSaveSpace(c *gin.Context) {
 		return
 	}
 
-	err = redis.Rdb.LRem("AllSaveSpace", 0, deleteSaveSpaceReq.DirPath).Err()
+	// 删除集合中元素
+	// todo: 删不掉
+	err = redis.Client.SRem("AllSaveSpace", deleteSaveSpaceReq.DirPath).Err()
 	if err != nil {
 		c.JSON(http.StatusOK, response.FailCodeMsg())
+		return
 	}
 	c.JSON(http.StatusOK, response.SuccessCodeMsg())
 }
 
-//打包成zip文件
+// Zip 打包成zip文件
 func Zip(src_dir string, zip_file_name string) {
 
 	// 预防：旧文件无法覆盖
@@ -286,4 +325,9 @@ func Copy(from, to string) error {
 		_, e = io.Copy(out, bufReader)
 	}
 	return e
+}
+
+func Decimal(value float64) float64 {
+	value, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", value), 64)
+	return value
 }

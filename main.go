@@ -15,13 +15,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//起一个rpc server
+
+	//rpc server
 	server := router.NewServer()
+
 	//server注册器
 	err = server.Register(new(protocol.RsyncService))
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	go server.Serve(lis)
 
 	//设置路由

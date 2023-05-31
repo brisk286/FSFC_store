@@ -26,13 +26,14 @@ func NewRouter() *gin.Engine {
 		group.POST("/getFilesInfo", v1.GetFilesInfo)
 		//group.POST("/getBack", v1.GetBack)
 		group.GET("/getAllSaveSpace", v1.GetAllSaveSpace)
+		group.GET("/getLastSyncTime", v1.GetLastSyncTime)
 		group.POST("/addSaveSpace", v1.AddSaveSpace)
 		group.POST("/deleteSaveSpace", v1.DeleteSaveSpace)
 	}
 	return server
 }
 
-//跨域设置中间件
+// 跨域设置中间件
 func Cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//http请求类型
@@ -63,7 +64,7 @@ func Cors() gin.HandlerFunc {
 	}
 }
 
-//异常处理中间件
+// 异常处理中间件
 func Recovery(c *gin.Context) {
 	defer func() {
 		if r := recover(); r != nil {

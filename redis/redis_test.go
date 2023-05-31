@@ -19,10 +19,10 @@ func init() {
 
 func Test_Kv(t *testing.T) {
 	//新增k/v
-	_ = Rdb.Set("hello", "world", 0).Err()
+	_ = Client.Set("hello", "world", 0).Err()
 
 	//获取k/v
-	result, _ := Rdb.Get("hello").Result()
+	result, _ := Client.Get("hello").Result()
 	fmt.Println(result)
 
 	//删除
@@ -31,22 +31,22 @@ func Test_Kv(t *testing.T) {
 
 func Test_List(t *testing.T) {
 	//新增
-	_ = Rdb.RPush("list", "message").Err()
-	_ = Rdb.RPush("list", "message2").Err()
+	_ = Client.RPush("list", "message").Err()
+	_ = Client.RPush("list", "message2").Err()
 
 	//查询
-	result, _ := Rdb.LLen("list").Result()
+	result, _ := Client.LLen("list").Result()
 	fmt.Println(result)
 
 	//更新
-	_ = Rdb.LSet("list", 2, "message set").Err()
+	_ = Client.LSet("list", 2, "message set").Err()
 
 	//遍历
-	lRange, _ := Rdb.LRange("list", 0, result).Result()
+	lRange, _ := Client.LRange("list", 0, result).Result()
 	for _, v := range lRange {
 		log.Println(v)
 	}
 
 	//删除
-	_, _ = Rdb.LRem("list", 3, "message2").Result()
+	_, _ = Client.LRem("list", 3, "message2").Result()
 }

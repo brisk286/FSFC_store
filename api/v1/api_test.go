@@ -2,10 +2,10 @@ package v1
 
 import (
 	"fmt"
+	"fsfc_store/fs"
 	"io/ioutil"
 	"os"
 	"testing"
-	"time"
 )
 
 func Test_Disk(t *testing.T) {
@@ -39,7 +39,17 @@ func Test_ArrFiles(t *testing.T) {
 }
 
 func Test_de(t *testing.T) {
-	dir := fmt.Sprintf(".\\%s", string(time.Now().UTC().String()))
-	fmt.Printf(dir)
-	os.MkdirAll(dir, 0777)
+	//dir := fmt.Sprintf(".\\%s", string(time.Now().UTC().String()))
+	//fmt.Printf(dir)
+	//os.MkdirAll(dir, 0777)
+	f, err := os.Create("../1.txt")
+	defer f.Close()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func Test_tran(t *testing.T) {
+	str := "C:\\Users\\14595\\Desktop\\FSFC\\fsfc_windows"
+	fmt.Println(fs.AbsToRelaStore(str))
 }

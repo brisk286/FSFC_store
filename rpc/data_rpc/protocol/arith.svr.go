@@ -7,6 +7,7 @@ import (
 	"fsfc_store/fs"
 	"fsfc_store/rsync"
 	"io/ioutil"
+	"time"
 )
 
 // RsyncService Defining Computational Digital Services
@@ -31,13 +32,14 @@ func (this *RsyncService) CalculateBlockHashes(args *Rpc1Request, reply *Rpc1Res
 
 		originalFile, err := ioutil.ReadFile(filename)
 		if err != nil {
-			panic("未找到远程端文件")
+			fmt.Println("未找到远程端文件")
 		}
 		fmt.Println("读取远程文件成功", filename)
 
 		fmt.Println("计算BlockHashes")
 		hashes := rsync.CalculateBlockHashes(originalFile)
 
+		fmt.Println("计算BlockHashes完成", filename)
 		hashesFiles = append(hashesFiles, rsync.FileBlockHashes{Filename: filename, BlockHashes: hashes})
 	}
 
@@ -55,6 +57,7 @@ func (this *RsyncService) CalculateBlockHashes(args *Rpc1Request, reply *Rpc1Res
 			BlockHashes: BlockHashes,
 		})
 	}
+	fmt.Println("CalculateBlockHash完成")
 
 	return nil
 }
@@ -86,11 +89,14 @@ func (this *RsyncService) CalculateRSyncOps(args *Rpc2Request, reply *Rpc2Respon
 	}
 
 	fmt.Println("文件同步中:", filename)
+
 	result := rsync.ApplyOps(original, rsyncOps, modifiedLength)
 	err = ioutil.WriteFile(filename, result, 0644)
 	if err != nil {
 		panic(err)
 	}
+	fs.PrimFs.LastSyncTime = time.Now()
+
 	fmt.Println("同步文件成功")
 
 	return nil

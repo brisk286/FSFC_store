@@ -23,3 +23,7 @@ type RsyncFileInfo struct {
 type AllSaveSpaceResp struct {
 	Dirs []string `json:"dirs"`
 }
+
+type LastSyncTimeResp struct {
+	LastSyncTime string `json:"lastSyncTime"`
+}
